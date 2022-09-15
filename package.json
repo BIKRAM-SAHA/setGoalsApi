@@ -1,0 +1,20 @@
+{
+  "name": "goalsapi",
+  "version": "1.0.0",
+  "description": "spi to get, add, update, delete goals",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index",
+    "dev": "nodemon index"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.19"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "express-async-handler": "^1.2.0"
+  }
+}
