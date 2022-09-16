@@ -1,10 +1,12 @@
 const asynchandler = require("express-async-handler");
+const Goals = require("../models/goalsModel");
 
 // @desc to get Goals from db
 // @route /api/goals
 // @access private
 const getGoals = asynchandler(async (req, res) => {
-  res.status(200).json({ msg: "GET api/goals/" });
+  const goals = await Goals.find();
+  res.status(200).json(goals);
 });
 
 // @desc to add Goals to db
@@ -15,24 +17,40 @@ const addGoals = asynchandler(async (req, res) => {
     res.status(400);
     throw new Error("Please add text field");
   }
-  res.status(200).json({
-    msg: "POST api/goals/",
-    text: process.env.STATUS == "production" ? null : req.body.text,
+  const goal = await Goals.create({
+    text: req.body.text,
   });
+
+  res.status(200).json(goal);
 });
 
 // @desc to update Goal in db
 // @route /api/goals/:id
 // @access private
 const updateGoals = asynchandler(async (req, res) => {
-  res.status(200).json({ msg: `UPDATE api/goals/${req.params.id}` });
+  const goal = await Goals.findById(req.params.id);
+  if (!goal) {
+    res.status(400);
+    throw new Error("Goal not Found");
+  }
+
+  const updatedGoal = await Goals.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+  res.status(200).json(updatedGoal);
 });
 
 // @desc to delete Goal frin db
 // @route /api/goals/:id
 // @access private
 const deleteGoals = asynchandler(async (req, res) => {
-  res.status(200).json({ msg: `DELETE api/goals/${req.params.id}` });
+  Goals.findByIdAndDelete(req.params.id, (err) => {
+    if (err) {
+      res.status(400);
+      throw new Error("Goal not Found");
+    }
+    res.status(200).json({ id: req.params.id });
+  });
 });
 
 module.exports = { getGoals, addGoals, updateGoals, deleteGoals };
