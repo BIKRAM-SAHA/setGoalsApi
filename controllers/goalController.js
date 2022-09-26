@@ -1,11 +1,12 @@
 const asynchandler = require("express-async-handler");
 const Goals = require("../models/goalsModel");
+const User = require("../models/usersModel");
 
 // @desc to get Goals from db
 // @route /api/goals
 // @access private
 const getGoals = asynchandler(async (req, res) => {
-  const goals = await Goals.find();
+  const goals = await Goals.find({ user: req.user.id });
   res.status(200).json(goals);
 });
 
@@ -19,6 +20,7 @@ const addGoals = asynchandler(async (req, res) => {
   }
   const goal = await Goals.create({
     text: req.body.text,
+    user: req.user.id,
   });
 
   res.status(200).json(goal);
@@ -34,6 +36,19 @@ const updateGoals = asynchandler(async (req, res) => {
     throw new Error("Goal not Found");
   }
 
+  const user = await User.findById(req.user.id);
+  //check for user
+  if (!user) {
+    res.status(401);
+    throw new Error("User not found");
+  }
+
+  //make sure login user matches goal user
+  if (goal.user.toString() != user.id) {
+    res.status(401);
+    throw new Error("User unauthorized");
+  }
+
   const updatedGoal = await Goals.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
@@ -44,13 +59,27 @@ const updateGoals = asynchandler(async (req, res) => {
 // @route /api/goals/:id
 // @access private
 const deleteGoals = asynchandler(async (req, res) => {
-  Goals.findByIdAndDelete(req.params.id, (err) => {
-    if (err) {
-      res.status(400);
-      throw new Error("Goal not Found");
-    }
-    res.status(200).json({ id: req.params.id });
-  });
+  const goal = await Goals.findById(req.params.id);
+  if (!goal) {
+    res.status(400);
+    throw new Error("Goal not Found");
+  }
+
+  const user = await User.findById(req.user.id);
+  //check for user
+  if (!user) {
+    res.status(401);
+    throw new Error("User not found");
+  }
+
+  //make sure login user matches goal user
+  if (goal.user.toString() != user.id) {
+    res.status(401);
+    throw new Error("User unauthorized");
+  }
+
+  await goal.remove();
+  res.status(200).json({ id: req.params.id });
 });
 
 module.exports = { getGoals, addGoals, updateGoals, deleteGoals };
